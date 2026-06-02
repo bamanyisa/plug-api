@@ -1,0 +1,2 @@
+class DisbursementPolicy < ApplicationPolicy
+end

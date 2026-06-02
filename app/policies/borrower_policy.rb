@@ -1,0 +1,2 @@
+class BorrowerPolicy < ApplicationPolicy
+end

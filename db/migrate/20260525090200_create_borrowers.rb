@@ -1,0 +1,24 @@
+class CreateBorrowers < ActiveRecord::Migration[8.1]
+  def change
+    create_table :borrowers do |t|
+      t.references :organization, null: false, foreign_key: true
+      t.string :first_name, null: false
+      t.string :last_name, null: false
+      t.string :email
+      t.string :phone
+      t.string :national_id
+      t.date :date_of_birth
+      t.string :gender
+      t.text :address
+      t.integer :fineract_client_id
+      t.string :fineract_external_id
+      t.string :sync_status, default: "pending"
+      t.datetime :synced_at
+
+      t.timestamps
+    end
+
+    add_index :borrowers, [:organization_id, :fineract_client_id], unique: true, where: "fineract_client_id IS NOT NULL"
+    add_index :borrowers, [:organization_id, :fineract_external_id], unique: true
+  end
+end
