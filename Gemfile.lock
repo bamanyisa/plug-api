@@ -117,6 +117,10 @@ GEM
       railties (>= 5)
     doorkeeper-jwt (0.4.2)
       jwt (>= 2.1)
+    doorkeeper-openid_connect (1.10.0)
+      doorkeeper (>= 5.5, < 6.0)
+      jwt (>= 2.5)
+      ostruct (>= 0.5)
     dotenv (3.2.0)
     drb (2.2.3)
     ed25519 (1.4.0)
@@ -421,6 +425,7 @@ DEPENDENCIES
   devise
   doorkeeper
   doorkeeper-jwt
+  doorkeeper-openid_connect
   factory_bot_rails
   faker
   faraday
@@ -481,6 +486,7 @@ CHECKSUMS
   diff-lcs (1.6.2) sha256=9ae0d2cba7d4df3075fe8cd8602a8604993efc0dfa934cff568969efb1909962
   doorkeeper (5.9.1) sha256=f74a35af9da40e59cac7cfd72c6d927421ef171b6d6d9ca0babf66e3fa8b9c90
   doorkeeper-jwt (0.4.2) sha256=2412f6b7044dd9c44b8b2b4a040089082341054a56251921467e1ad816e44d6c
+  doorkeeper-openid_connect (1.10.0) sha256=fbba8cbab81cc4df72a11463255bcae79fdd6e01323f32a34492080c9bd7fae0
   dotenv (3.2.0) sha256=e375b83121ea7ca4ce20f214740076129ab8514cd81378161f11c03853fe619d
   drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
   ed25519 (1.4.0) sha256=16e97f5198689a154247169f3453ef4cfd3f7a47481fde0ae33206cdfdcac506
