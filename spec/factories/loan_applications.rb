@@ -2,7 +2,7 @@ FactoryBot.define do
   factory :loan_application do
     association :organization
     association :borrower
-    association :loan_product
+    fineract_product_id { 1 }
     requested_amount { 1000 }
     status { "draft" }
   end
