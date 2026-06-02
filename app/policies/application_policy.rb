@@ -6,31 +6,17 @@ class ApplicationPolicy
     @record = record
   end
 
-  def index?
-    true
-  end
-
-  def show?
-    same_org?
-  end
-
-  def create?
-    true
-  end
-
-  def update?
-    same_org?
-  end
-
-  def destroy?
-    false
-  end
+  def index?    = true
+  def show?     = same_org?
+  def create?   = true
+  def update?   = same_org?
+  def destroy?  = false
 
   class Scope
     attr_reader :user, :scope
 
     def initialize(user, scope)
-      @user = user
+      @user  = user
       @scope = scope
     end
 
