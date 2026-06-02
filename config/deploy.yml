@@ -7,14 +7,14 @@ servers:
       - 57.131.34.157
     options:
       network: plug
+      publish:
+        - "3001:80"
   job:
     hosts:
       - 57.131.34.157
     cmd: bundle exec sidekiq
     options:
       network: plug
-
-proxy: false
 
 registry:
   server: ghcr.io
@@ -111,8 +111,3 @@ accessories:
     options:
       network: plug
 
-healthcheck:
-  path: /health
-  port: 3001
-  max_attempts: 10
-  interval: 5s
