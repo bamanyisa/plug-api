@@ -1,20 +1,66 @@
 services:
+
+  # ── POSTGRES (shared by Rails + Fineract) ─────────────────────────────────
   db:
     image: postgres:16-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: plug_api_development
-      POSTGRES_USER: plug_api
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: postgres
     ports:
-      - "5433:5432"  # 5433 to avoid clashing with any local postgres
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # ── FINERACT ──────────────────────────────────────────────────────────────
+  fineract:
+    image: openmf/fineract:1.11.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FINERACT_SERVER_PORT: "8080"
+      FINERACT_SERVER_SSL_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Xmx768m -Xms256m"
+      # Tenant metadata DB
+      FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME: org.postgresql.Driver
+      FINERACT_HIKARI_JDBC_URL: jdbc:postgresql://db:5432/fineract_tenants
+      FINERACT_HIKARI_USERNAME: postgres
+      FINERACT_HIKARI_PASSWORD: ${DB_PASSWORD:-password}
+      # Tenant data DB
+      FINERACT_HIKARI_TENANT_DRIVER_SOURCE_CLASS_NAME: org.postgresql.Driver
+      FINERACT_HIKARI_TENANT_JDBC_URL: jdbc:postgresql://db:5432/fineract_tenants
+      FINERACT_HIKARI_TENANT_USERNAME: postgres
+      FINERACT_HIKARI_TENANT_PASSWORD: ${DB_PASSWORD:-password}
+      # Default tenant
+      FINERACT_DEFAULT_TENANTDB_IDENTIFIER: default
+      FINERACT_DEFAULT_TENANTDB_NAME: fineract_default
+      FINERACT_DEFAULT_TENANTDB_DESCRIPTION: Default Tenant
+      FINERACT_DEFAULT_TENANTDB_TIMEZONE: Africa/Kampala
+      FINERACT_DEFAULT_TENANTDB_HOSTNAME: db
+      FINERACT_DEFAULT_TENANTDB_PORT: "5432"
+      FINERACT_DEFAULT_TENANTDB_UID: postgres
+      FINERACT_DEFAULT_TENANTDB_PWD: ${DB_PASSWORD:-password}
+      # Security — OAuth2 only, validated against Doorkeeper JWKS
+      FINERACT_SECURITY_BASICAUTH_ENABLED: "false"
+      FINERACT_SECURITY_2FA_ENABLED: "false"
+      FINERACT_SECURITY_OAUTH_ENABLED: "true"
+      FINERACT_SERVER_OAUTH_RESOURCE_URL: "http://web:3001"
+    ports:
+      - "8081:8080"
+
+  # ── REDIS ─────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     ports:
-      - "6380:6379"  # 6380 to avoid clashing with any local redis
+      - "6380:6379"
 
+  # ── RAILS ─────────────────────────────────────────────────────────────────
   web:
     build: .
     command: ./bin/rails server -b 0.0.0.0
@@ -23,14 +69,18 @@ services:
     ports:
       - "3001:80"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      fineract:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
-      DATABASE_URL: postgresql://plug_api:password@db:5432/plug_api_development
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-password}@db:5432/plug_api_development
       REDIS_URL: redis://redis:6379/0
+      FINERACT_BASE_URL: http://fineract:8080
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
       DOORKEEPER_JWT_SECRET: ${DOORKEEPER_JWT_SECRET}
-      FINERACT_BASIC_AUTH: ${FINERACT_BASIC_AUTH}
 
   sidekiq:
     build: .
@@ -38,14 +88,16 @@ services:
     volumes:
       - .:/rails
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
-      DATABASE_URL: postgresql://plug_api:password@db:5432/plug_api_development
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-password}@db:5432/plug_api_development
       REDIS_URL: redis://redis:6379/0
+      FINERACT_BASE_URL: http://fineract:8080
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
       DOORKEEPER_JWT_SECRET: ${DOORKEEPER_JWT_SECRET}
-      FINERACT_BASIC_AUTH: ${FINERACT_BASIC_AUTH}
 
 volumes:
   postgres_data:
