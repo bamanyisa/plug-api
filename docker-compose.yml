@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: plug_api_development
+      POSTGRES_USER: plug_api
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"  # 5433 to avoid clashing with any local postgres
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # 6380 to avoid clashing with any local redis
+
+  web:
+    build: .
+    command: ./bin/rails server -b 0.0.0.0
+    volumes:
+      - .:/rails
+    ports:
+      - "3001:80"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://plug_api:password@db:5432/plug_api_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      DOORKEEPER_JWT_SECRET: ${DOORKEEPER_JWT_SECRET}
+      FINERACT_BASIC_AUTH: ${FINERACT_BASIC_AUTH}
+
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    volumes:
+      - .:/rails
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://plug_api:password@db:5432/plug_api_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      DOORKEEPER_JWT_SECRET: ${DOORKEEPER_JWT_SECRET}
+      FINERACT_BASIC_AUTH: ${FINERACT_BASIC_AUTH}
+
+volumes:
+  postgres_data:

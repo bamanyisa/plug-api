@@ -8,7 +8,8 @@
 /.bundle
 
 # Ignore all environment files.
-/.env*
+/.env
+!/.env.example
 
 # Ignore all logfiles and tempfiles.
 /log/*
@@ -24,3 +25,6 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+.kamal/secrets
+.env
+vendor/bundle/

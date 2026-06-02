@@ -1,0 +1,87 @@
+service: plug-api
+image: ghcr.io/bamanyisa/plug-api
+
+servers:
+  web:
+    hosts:
+      - 57.131.34.157
+    options:
+      network: plug
+  job:
+    hosts:
+      - 57.131.34.157
+    cmd: bundle exec sidekiq
+    options:
+      network: plug
+
+# No kamal-proxy — routing handled by Cloudflare tunnel (see accessories.cloudflared)
+proxy: false
+
+registry:
+  server: ghcr.io
+  username: bamanyisa
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+ssh:
+  user: ubuntu
+  keys:
+    - ~/.ssh/vps_ea6e6e62_key
+
+builder:
+  arch: amd64
+
+env:
+  clear:
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: true
+    RAILS_SERVE_STATIC_FILES: true
+    PORT: "3001"
+    ALLOWED_ORIGINS: "https://app.plug.ug,https://plug.ug"
+  secret:
+    - RAILS_MASTER_KEY
+    - DATABASE_URL
+    - REDIS_URL
+    - DOORKEEPER_JWT_SECRET
+    - FINERACT_BASIC_AUTH
+
+accessories:
+  db:
+    image: postgres:16-alpine
+    host: 57.131.34.157
+    port: 5432
+    env:
+      clear:
+        POSTGRES_DB: plug_api_production
+        POSTGRES_USER: plug_api
+      secret:
+        - POSTGRES_PASSWORD
+    volumes:
+      - plug_api_postgres:/var/lib/postgresql/data
+    options:
+      network: plug
+
+  redis:
+    image: redis:7-alpine
+    host: 57.131.34.157
+    port: 6379
+    volumes:
+      - plug_api_redis:/data
+    options:
+      network: plug
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    host: 57.131.34.157
+    cmd: tunnel --no-autoupdate run
+    env:
+      secret:
+        - TUNNEL_TOKEN
+    options:
+      network: plug
+
+healthcheck:
+  path: /health
+  port: 3001
+  max_attempts: 10
+  interval: 5s
