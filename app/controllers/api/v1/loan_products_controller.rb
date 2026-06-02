@@ -16,7 +16,8 @@ module Api
         record = LoanProduct.new(loan_product_params)
         authorize record
         record.save!
-        SyncLoanProductToFineractJob.perform_later(current_user.organization_id, record.id)
+        response = Fineract::LoanProductsService.new(current_user.organization, fineract_token).create(record)
+        record.update!(fineract_product_id: response["resourceId"])
         render json: LoanProductBlueprint.render_as_hash(record), status: :created
       end
 
@@ -30,9 +31,9 @@ module Api
       private
 
       def loan_product_params
-        params.permit(:name, :short_name, :currency_code, :currency_decimal_places, :min_principal, :max_principal,
-                      :default_principal, :nominal_interest_rate, :amortization_type, :interest_type,
-                      :repayment_frequency, :repayment_every, :number_of_repayments, :active)
+        params.permit(:name, :short_name, :currency_code, :currency_decimal_places, :min_principal,
+                      :max_principal, :default_principal, :nominal_interest_rate, :amortization_type,
+                      :interest_type, :repayment_frequency, :repayment_every, :number_of_repayments, :active)
       end
     end
   end

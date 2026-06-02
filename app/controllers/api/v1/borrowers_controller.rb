@@ -16,7 +16,8 @@ module Api
         borrower = Borrower.new(borrower_params.merge(fineract_external_id: SecureRandom.uuid))
         authorize borrower
         borrower.save!
-        SyncBorrowerToFineractJob.perform_later(current_user.organization_id, borrower.id)
+        response = Fineract::ClientsService.new(current_user.organization, fineract_token).create(borrower)
+        borrower.update!(fineract_client_id: response["clientId"] || response["resourceId"])
         render json: BorrowerBlueprint.render_as_hash(borrower), status: :created
       end
 
