@@ -8,6 +8,7 @@ gem "puma",  ">= 5.0"
 gem "devise"
 gem "doorkeeper"
 gem "doorkeeper-jwt"
+gem "doorkeeper-openid_connect"  # exposes /.well-known/openid-configuration for Fineract OIDC discovery
 
 # Multi-tenancy
 gem "acts_as_tenant"

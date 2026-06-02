@@ -38,28 +38,17 @@ env:
     RAILS_SERVE_STATIC_FILES: true
     PORT: "3001"
     ALLOWED_ORIGINS: "https://app.plug.ug,https://plug.ug"
+    # Fineract runs in the same Docker network via plug-deploy compose stack
+    FINERACT_BASE_URL: "http://fineract:8080"
   secret:
     - RAILS_MASTER_KEY
     - DATABASE_URL
     - REDIS_URL
     - DOORKEEPER_JWT_SECRET
 
+# Postgres is shared with the plug-deploy compose stack (container name: postgres).
+# Only Redis and Cloudflare tunnel are managed as Kamal accessories.
 accessories:
-  db:
-    image: postgres:16-alpine
-    host: 57.131.34.157
-    port: 5432
-    env:
-      clear:
-        POSTGRES_DB: plug_api_production
-        POSTGRES_USER: plug_api
-      secret:
-        - POSTGRES_PASSWORD
-    volumes:
-      - plug_api_postgres:/var/lib/postgresql/data
-    options:
-      network: plug
-
   redis:
     image: redis:7-alpine
     host: 57.131.34.157
