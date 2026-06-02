@@ -5,6 +5,10 @@ class ApplicationJob < ActiveJob::Base
   # ActsAsTenant.current_tenant is NOT propagated across Sidekiq thread boundaries.
   def with_tenant(organization_id)
     org = Organization.find(organization_id)
-    ActsAsTenant.with_tenant(org) { yield }
+    ActsAsTenant.with_tenant(org) { yield org }
+  end
+
+  def system_token
+    Fineract::SystemToken.fetch
   end
 end

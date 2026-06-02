@@ -1,7 +1,7 @@
 module Fineract
   class LoansService
-    def initialize(organization)
-      @client = BaseClient.new(organization)
+    def initialize(organization, token)
+      @client = BaseClient.new(organization, token)
     end
 
     def submit(application)

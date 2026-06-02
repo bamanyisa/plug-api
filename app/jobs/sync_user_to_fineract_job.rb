@@ -1,8 +1,8 @@
 class SyncUserToFineractJob < ApplicationJob
   def perform(organization_id, record_id)
-    with_tenant(organization_id) do
+    with_tenant(organization_id) do |org|
       user = User.find(record_id)
-      service = Fineract::StaffService.new(user.organization)
+      service = Fineract::StaffService.new(org, system_token)
       staff_id = service.create_staff(user)
       user.update!(fineract_staff_id: staff_id, fineract_username: user.fineract_username || user.email)
       appuser_id = service.create_appuser(user, staff_id)

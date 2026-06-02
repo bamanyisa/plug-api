@@ -14,6 +14,12 @@ class ApplicationController < ActionController::API
     @current_user ||= User.find(doorkeeper_token.resource_owner_id)
   end
 
+  # The raw JWT — passed to Fineract services so Fineract can authenticate
+  # the user directly via its OAuth2 configuration (JWKS from Doorkeeper).
+  def fineract_token
+    doorkeeper_token.token
+  end
+
   def set_current_tenant
     ActsAsTenant.current_tenant = current_user.organization
   end

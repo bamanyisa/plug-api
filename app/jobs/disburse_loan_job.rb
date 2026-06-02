@@ -1,8 +1,8 @@
 class DisburseLoanJob < ApplicationJob
   def perform(organization_id, record_id)
-    with_tenant(organization_id) do
+    with_tenant(organization_id) do |org|
       disbursement = Disbursement.find(record_id)
-      response = Fineract::LoansService.new(disbursement.organization).disburse(
+      response = Fineract::LoansService.new(org, system_token).disburse(
         disbursement.loan.fineract_loan_id,
         disbursement.amount,
         disbursement.disbursed_on,

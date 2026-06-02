@@ -1,11 +1,11 @@
 class CreateLoanFromApplicationJob < ApplicationJob
   def perform(organization_id, record_id)
-    with_tenant(organization_id) do
+    with_tenant(organization_id) do |org|
       application = LoanApplication.find(record_id)
-      response = Fineract::LoansService.new(application.organization).submit(application)
+      response = Fineract::LoansService.new(org, system_token).submit(application)
 
       Loan.create!(
-        organization: application.organization,
+        organization: org,
         borrower: application.borrower,
         loan_product: application.loan_product,
         loan_application: application,

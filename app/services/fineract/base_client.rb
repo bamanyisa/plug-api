@@ -2,8 +2,9 @@ module Fineract
   class BaseClient
     API_PATH = "/fineract-provider/api/v1"
 
-    def initialize(organization)
-      @org = organization
+    def initialize(organization, token)
+      @org   = organization
+      @token = token
     end
 
     def get(path, params = {})
@@ -42,7 +43,7 @@ module Fineract
     def headers
       {
         "fineract-platform-tenantid" => @org.fineract_tenant_id,
-        "Authorization"              => "Basic #{@org.fineract_service_auth}",
+        "Authorization"              => "Bearer #{@token}",
         "Content-Type"               => "application/json"
       }
     end

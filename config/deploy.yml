@@ -43,7 +43,6 @@ env:
     - DATABASE_URL
     - REDIS_URL
     - DOORKEEPER_JWT_SECRET
-    - FINERACT_BASIC_AUTH
 
 accessories:
   db:
