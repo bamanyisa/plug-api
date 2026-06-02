@@ -2,14 +2,17 @@ module Api
   module V1
     class DisbursementsController < BaseController
       def index
-        records = policy_scope(Disbursement).order(created_at: :desc).page(params[:page])
-        render json: { data: DisbursementBlueprint.render_as_hash(records), meta: pagination_meta(records) }
+        render json: fineract.get("/loans/#{params[:loan_id]}/transactions")
       end
 
       def show
-        record = Disbursement.find(params[:id])
-        authorize record
-        render json: DisbursementBlueprint.render_as_hash(record)
+        render json: fineract.get("/loans/#{params[:loan_id]}/transactions/#{params[:id]}")
+      end
+
+      private
+
+      def fineract
+        Fineract::BaseClient.new(current_user.organization, fineract_token)
       end
     end
   end

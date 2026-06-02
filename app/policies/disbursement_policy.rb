@@ -1,2 +1,0 @@
-class DisbursementPolicy < ApplicationPolicy
-end

@@ -3,11 +3,10 @@ class LoanApplication < ApplicationRecord
 
   belongs_to :organization
   belongs_to :borrower
-  belongs_to :loan_product
   belongs_to :assigned_officer, class_name: "User", optional: true
-  belongs_to :approved_by, class_name: "User", optional: true
 
-  has_one :loan, dependent: :nullify
+  STATUSES = %w[draft submitted rejected].freeze
 
-  validates :organization, :borrower, :loan_product, :status, :requested_amount, presence: true
+  validates :organization, :borrower, :fineract_product_id, :requested_amount, presence: true
+  validates :status, inclusion: { in: STATUSES }
 end

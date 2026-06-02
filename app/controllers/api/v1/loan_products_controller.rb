@@ -2,38 +2,33 @@ module Api
   module V1
     class LoanProductsController < BaseController
       def index
-        records = policy_scope(LoanProduct).order(created_at: :desc).page(params[:page])
-        render json: { data: LoanProductBlueprint.render_as_hash(records), meta: pagination_meta(records) }
+        render json: fineract.get("/loanproducts")
       end
 
       def show
-        record = LoanProduct.find(params[:id])
-        authorize record
-        render json: LoanProductBlueprint.render_as_hash(record)
+        render json: fineract.get("/loanproducts/#{params[:id]}")
       end
 
       def create
-        record = LoanProduct.new(loan_product_params)
-        authorize record
-        record.save!
-        response = Fineract::LoanProductsService.new(current_user.organization, fineract_token).create(record)
-        record.update!(fineract_product_id: response["resourceId"])
-        render json: LoanProductBlueprint.render_as_hash(record), status: :created
+        render json: fineract.post("/loanproducts", loan_product_params), status: :created
       end
 
       def update
-        record = LoanProduct.find(params[:id])
-        authorize record
-        record.update!(loan_product_params)
-        render json: LoanProductBlueprint.render_as_hash(record)
+        render json: fineract.put("/loanproducts/#{params[:id]}", loan_product_params)
       end
 
       private
 
       def loan_product_params
-        params.permit(:name, :short_name, :currency_code, :currency_decimal_places, :min_principal,
-                      :max_principal, :default_principal, :nominal_interest_rate, :amortization_type,
-                      :interest_type, :repayment_frequency, :repayment_every, :number_of_repayments, :active)
+        params.permit(:name, :shortName, :currencyCode, :digitsAfterDecimal,
+                      :minPrincipal, :maxPrincipal, :principal,
+                      :interestRatePerPeriod, :repaymentEvery, :numberOfRepayments,
+                      :amortizationType, :interestType, :repaymentFrequencyType,
+                      :locale, :dateFormat)
+      end
+
+      def fineract
+        Fineract::BaseClient.new(current_user.organization, fineract_token)
       end
     end
   end

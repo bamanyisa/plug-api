@@ -2,36 +2,37 @@ module Api
   module V1
     class LoansController < BaseController
       def index
-        records = policy_scope(Loan).order(created_at: :desc).page(params[:page])
-        render json: { data: LoanBlueprint.render_as_hash(records), meta: pagination_meta(records) }
+        render json: fineract.get("/loans", clientId: params[:borrower_id], limit: params[:limit], offset: params[:offset])
       end
 
       def show
-        record = Loan.find(params[:id])
-        authorize record
-        render json: LoanBlueprint.render_as_hash(record)
-      end
-
-      def disburse
-        record = Loan.find(params[:id])
-        authorize record, :disburse?
-        disbursement = Disbursement.create!(
-          organization: record.organization,
-          loan: record,
-          disbursed_by: current_user,
-          amount: params[:amount],
-          disbursed_on: params[:disbursed_on] || Date.current,
-          payment_type: params[:payment_type]
-        )
-        DisburseLoanJob.perform_later(current_user.organization_id, disbursement.id)
-        render json: DisbursementBlueprint.render_as_hash(disbursement), status: :accepted
+        render json: fineract.get("/loans/#{params[:id]}")
       end
 
       def schedule
-        record = Loan.find(params[:id])
-        authorize record, :schedule?
-        response = Fineract::ScheduleService.new(record.organization).get(record.fineract_loan_id)
-        render json: response
+        render json: fineract.get("/loans/#{params[:id]}/repaymentschedule")
+      end
+
+      def approve
+        render json: fineract.post("/loans/#{params[:id]}/commands?command=approve", approve_params)
+      end
+
+      def disburse
+        render json: fineract.post("/loans/#{params[:id]}/disbursements", disburse_params)
+      end
+
+      private
+
+      def approve_params
+        params.permit(:approvedOnDate, :note, :locale, :dateFormat)
+      end
+
+      def disburse_params
+        params.permit(:actualDisbursementDate, :transactionAmount, :paymentTypeId, :locale, :dateFormat)
+      end
+
+      def fineract
+        Fineract::BaseClient.new(current_user.organization, fineract_token)
       end
     end
   end

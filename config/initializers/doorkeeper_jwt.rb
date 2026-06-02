@@ -1,7 +1,7 @@
 Doorkeeper::JWT.configure do
   secret = Rails.application.credentials.doorkeeper_jwt_secret.presence || ENV["DOORKEEPER_JWT_SECRET"].presence || "dev-doorkeeper-jwt-secret"
   secret_key secret
-  encryption_method :hs512
+  signing_method :hs512
 
   token_payload do |opts|
     user = User.find(opts[:resource_owner_id])

@@ -22,36 +22,38 @@ module Api
       def submit
         record = LoanApplication.find(params[:id])
         authorize record, :submit?
-        record.update!(status: "submitted", submitted_at: Time.current)
-        CreateLoanFromApplicationJob.perform_later(current_user.organization_id, record.id)
-        render json: LoanApplicationBlueprint.render_as_hash(record)
-      end
 
-      def approve
-        record = LoanApplication.find(params[:id])
-        authorize record, :approve?
-        record.update!(status: "approved", approved_at: Time.current, approved_by: current_user)
+        response = fineract.post("/loans", {
+          clientId:          record.borrower.fineract_client_id,
+          productId:         record.fineract_product_id,
+          principal:         record.requested_amount,
+          loanTermFrequency: record.requested_term,
+          submittedOnDate:   Date.current.strftime("%Y-%m-%d"),
+          loanType:          "individual",
+          locale:            "en",
+          dateFormat:        "yyyy-MM-dd"
+        })
+
+        record.update!(status: "submitted", fineract_loan_id: response["loanId"] || response["resourceId"])
         render json: LoanApplicationBlueprint.render_as_hash(record)
       end
 
       def reject
         record = LoanApplication.find(params[:id])
         authorize record, :reject?
-        record.update!(status: "rejected", rejected_at: Time.current, rejection_reason: params[:rejection_reason], approved_by: current_user)
-        render json: LoanApplicationBlueprint.render_as_hash(record)
-      end
-
-      def withdraw
-        record = LoanApplication.find(params[:id])
-        authorize record, :withdraw?
-        record.update!(status: "withdrawn")
+        record.update!(status: "rejected", rejection_reason: params[:rejection_reason])
         render json: LoanApplicationBlueprint.render_as_hash(record)
       end
 
       private
 
       def loan_application_params
-        params.permit(:borrower_id, :loan_product_id, :assigned_officer_id, :requested_amount, :requested_term, :purpose, additional_fields: {})
+        params.permit(:borrower_id, :fineract_product_id, :assigned_officer_id,
+                      :requested_amount, :requested_term, :purpose)
+      end
+
+      def fineract
+        Fineract::BaseClient.new(current_user.organization, fineract_token)
       end
     end
   end

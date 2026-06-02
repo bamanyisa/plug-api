@@ -1,2 +1,0 @@
-class LoanProductPolicy < ApplicationPolicy
-end
