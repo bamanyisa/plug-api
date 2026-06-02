@@ -11,7 +11,9 @@ class ApplicationController < ActionController::API
   private
 
   def current_user
-    @current_user ||= User.find(doorkeeper_token.resource_owner_id)
+    # Use without_tenant so this bootstrap lookup works even if require_tenant!
+    # is set globally — tenant isn't known yet at this point in the request.
+    @current_user ||= ActsAsTenant.without_tenant { User.find(doorkeeper_token.resource_owner_id) }
   end
 
   # The raw JWT — passed to Fineract services so Fineract can authenticate
